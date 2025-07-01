@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Secure File Sharing System</title>
+  <style>
+    :root {
+      --primary: #4361ee;
+      --secondary: #3f37c9;
+      --success: #4cc9f0;
+      --danger: #f72585;
+      --light: #f8f9fa;
+      --dark: #212529;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    body {
+      background-color: #f5f7fb;
+      color: var(--dark);
+      line-height: 1.6;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding: 20px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+    .description {
+      font-size: 1.1rem;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .card-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 25px;
+      margin-top: 20px;
+    }
+    .card {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      padding: 25px;
+      transition: transform 0.3s ease;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+    }
+    .card h2 {
+      color: var(--primary);
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #eee;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #555;
+    }
+    input,
+    select,
+    button {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 1rem;
+    }
+    button {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background-color 0.3s;
+      margin-top: 10px;
+    }
+    button:hover {
+      background-color: var(--secondary);
+    }
+    .btn-success {
+      background-color: var(--success);
+    }
+    .btn-danger {
+      background-color: var(--danger);
+    }
+    .file-list {
+      margin-top: 20px;
+      border-top: 1px solid #eee;
+      padding-top: 15px;
+    }
+    .file-item {
+      padding: 12px;
+      border: 1px solid #eee;
+      border-radius: 5px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .file-info {
+      flex: 1;
+    }
+    .file-name {
+      font-weight: 600;
+    }
+    .file-meta {
+      font-size: 0.9rem;
+      color: #777;
+    }
+    .token-display {
+      background-color: #f8f9fa;
+      padding: 15px;
+      border-radius: 5px;
+      margin-top: 15px;
+      font-family: monospace;
+      word-break: break-all;
+      font-size: 0.9rem;
+      border: 1px dashed #ddd;
+    }
+    .response-container {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 5px;
+      background-color: #f8f9fa;
+      border-left: 4px solid var(--primary);
+    }
+    .response-title {
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: var(--primary);
+    }
+    .response-content {
+      font-family: monospace;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .hidden {
+      display: none;
+    }
+    #client-action-buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      padding: 20px;
+      color: #777;
+      font-size: 0.9rem;
+    }
+    @media (max-width: 768px) {
+      .card-container {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Secure File Sharing System</h1>
+      <p class="description">
+        This system allows Operations Users to upload files and Client Users to securely access them.
+        All file transfers are protected with encryption and secure tokens.
+      </p>
+    </header>
+
+    <div class="card-container">
+      <!-- Operations User Section -->
+      <div class="card">
+        <h2>Operations User</h2>
+        <div class="form-group">
+          <label for="ops-username">Username</label>
+          <input type="text" id="ops-username" placeholder="Enter username" />
+        </div>
+
+        <div class="form-group">
+          <label for="ops-password">Password</label>
+          <input type="password" id="ops-password" placeholder="Enter password" />
+        </div>
+
+        <button id="ops-login-btn">Login as Ops User</button>
+
+        <div id="ops-upload-section" class="hidden">
+          <div class="form-group">
+            <label for="file-upload">Upload File (PPTX, DOCX, XLSX only)</label>
+            <input type="file" id="file-upload" accept=".pptx,.docx,.xlsx" />
+          </div>
+
+          <button id="upload-file-btn" class="btn-success">Upload File</button>
+        </div>
+      </div>
+
+      <!-- Client User Section -->
+      <div class="card">
+        <h2>Client User</h2>
+        <div id="client-action-buttons">
+          <button id="show-signup-btn" type="button">Sign Up</button>
+          <button id="show-login-btn" type="button">Login</button>
+        </div>
+
+        <div id="client-signup-section" class="hidden">
+          <div class="form-group">
+            <label for="client-username">Username</label>
+            <input type="text" id="client-username" placeholder="Enter username" />
+          </div>
+
+          <div class="form-group">
+            <label for="client-email">Email</label>
+            <input type="email" id="client-email" placeholder="Enter email" />
+          </div>
+
+          <div class="form-group">
+            <label for="client-password">Password</label>
+            <input type="password" id="client-password" placeholder="Enter password" />
+          </div>
+
+          <button id="client-signup-btn">Sign Up as Client</button>
+        </div>
+
+        <div id="client-verify-section" class="hidden">
+          <div class="form-group">
+            <label for="verification-token">Verification Token</label>
+            <input type="text" id="verification-token" placeholder="Enter verification token" />
+          </div>
+
+          <button id="verify-email-btn" class="btn-success">Verify Email</button>
+        </div>
+
+        <div id="client-login-section" class="hidden">
+          <div class="form-group">
+            <label for="client-login-username">Username</label>
+            <input type="text" id="client-login-username" placeholder="Enter username" />
+          </div>
+
+          <div class="form-group">
+            <label for="client-login-password">Password</label>
+            <input type="password" id="client-login-password" placeholder="Enter password" />
+          </div>
+
+          <button id="client-login-btn">Login as Client</button>
+        </div>
+
+        <div id="client-actions" class="hidden">
+          <button id="list-files-btn">List All Files</button>
+
+          <div class="file-list" id="client-file-list"></div>
+
+          <div class="token-display hidden" id="download-token-display">
+            <strong>Download Token:</strong> <span id="download-token"></span>
+            <div class="response-container hidden" id="download-link-container">
+              <div class="response-title">Download Link:</div>
+              <div class="response-content" id="download-link"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="response-container" id="api-response">
+      <div class="response-title">API Response:</div>
+      <div class="response-content" id="response-content">No activity yet</div>
+    </div>
+
+    <footer>
+      <p>Secure File Sharing System &copy; 2025 | Built with Django REST Framework</p>
+    </footer>
+  </div>
+
+  <script>
+    const API_BASE_URL = 'http://localhost:8000/api';
+    let opsAccessToken = '';
+    let clientAccessToken = '';
+
+    const opsLoginBtn = document.getElementById('ops-login-btn');
+    const clientSignupBtn = document.getElementById('client-signup-btn');
+    const verifyEmailBtn = document.getElementById('verify-email-btn');
+    const clientLoginBtn = document.getElementById('client-login-btn');
+    const uploadFileBtn = document.getElementById('upload-file-btn');
+    const listFilesBtn = document.getElementById('list-files-btn');
+    const responseContent = document.getElementById('response-content');
+
+    const opsUploadSection = document.getElementById('ops-upload-section');
+    const clientVerifySection = document.getElementById('client-verify-section');
+    const clientLoginSection = document.getElementById('client-login-section');
+    const clientActions = document.getElementById('client-actions');
+    const clientSignupSection = document.getElementById('client-signup-section');
+
+    // Toggle signup/login forms
+    document.getElementById('show-signup-btn').onclick = () => {
+      clientSignupSection.classList.remove('hidden');
+      clientLoginSection.classList.add('hidden');
+      clientVerifySection.classList.add('hidden');
+    };
+    document.getElementById('show-login-btn').onclick = () => {
+      clientLoginSection.classList.remove('hidden');
+      clientSignupSection.classList.add('hidden');
+      clientVerifySection.classList.add('hidden');
+    };
+
+    // Show login form by default
+    window.onload = () => {
+      clientLoginSection.classList.remove('hidden');
+      clientSignupSection.classList.add('hidden');
+      clientVerifySection.classList.add('hidden');
+    };
+
+    function showResponse(message, isError = false) {
+      responseContent.textContent =
+        typeof message === 'string' ? message : JSON.stringify(message, null, 2);
+      responseContent.parentElement.style.borderLeftColor = isError ? '#f72585' : '#4361ee';
+    }
+
+    // Ops login
+    opsLoginBtn.addEventListener('click', async () => {
+      const username = document.getElementById('ops-username').value;
+      const password = document.getElementById('ops-password').value;
+      if (!username || !password) {
+        showResponse('Please enter both username and password', true);
+        return;
+      }
+      try {
+        const response = await fetch(`${API_BASE_URL}/ops/login/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        });
+        const data = await response.json();
+        if (response.ok) {
+          opsAccessToken = data.access;
+          showResponse('Ops login successful! Access token stored.');
+          opsUploadSection.classList.remove('hidden');
+        } else {
+          showResponse(data.detail || 'Login failed', true);
+        }
+      } catch (error) {
+        showResponse('Network error: ' + error.message, true);
+      }
+    });
+
+    // File upload
+    uploadFileBtn.addEventListener('click', async () => {
+      const fileInput = document.getElementById('file-upload');
+      const file = fileInput.files[0];
+      if (!file) {
+        showResponse('Please select a file to upload', true);
+        return;
+      }
+      const validExtensions = ['.pptx', '.docx', '.xlsx'];
+      const fileExt = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+      if (!validExtensions.includes(fileExt)) {
+        showResponse('Invalid file type. Only PPTX, DOCX, and XLSX files are allowed.', true);
+        return;
+      }
+      const formData = new FormData();
+      formData.append('file', file);
+      try {
+        const response = await fetch(`${API_BASE_URL}/ops/upload/`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${opsAccessToken}` },
+          body: formData,
+        });
+        const data = await response.json();
+        if (response.ok) {
+          showResponse('File uploaded successfully!');
+          fileInput.value = '';
+        } else {
+          showResponse(data.detail || 'File upload failed', true);
+        }
+      } catch (error) {
+        showResponse('Network error: ' + error.message, true);
+      }
+    });
+
+    // Client signup
+    clientSignupBtn.addEventListener('click', async () => {
+      const username = document.getElementById('client-username').value;
+      const email = document.getElementById('client-email').value;
+      const password = document.getElementById('client-password').value;
+      if (!username || !email || !password) {
+        showResponse('Please fill all fields', true);
+        return;
+      }
+      try {
+        const response = await fetch(`${API_BASE_URL}/client/signup/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, email, password, role: 'CLIENT' }),
+        });
+        const data = await response.json();
+        if (response.ok) {
+          showResponse('Signup successful! Verification email sent.');
+          clientSignupSection.classList.add('hidden');
+          clientVerifySection.classList.remove('hidden');
+        } else {
+          showResponse(data.detail || 'Signup failed', true);
+        }
+      } catch (error) {
+        showResponse('Network error: ' + error.message, true);
+      }
+    });
+
+    // Email verification
+    verifyEmailBtn.addEventListener('click', async () => {
+      const token = document.getElementById('verification-token').value;
+      if (!token) {
+        showResponse('Please enter verification token', true);
+        return;
+      }
+      try {
+        const response = await fetch(`${API_BASE_URL}/client/verify-email/?token=${token}`, {
+          method: 'GET',
+        });
+        const data = await response.json();
+        if (response.ok) {
+          showResponse('Email verified successfully!');
+          clientVerifySection.classList.add('hidden');
+          clientLoginSection.classList.remove('hidden');
+        } else {
+          showResponse(data.detail || 'Verification failed', true);
+        }
+      } catch (error) {
+        showResponse('Network error: ' + error.message, true);
+      }
+    });
+
+    // Client login
+    clientLoginBtn.addEventListener('click', async () => {
+      const username = document.getElementById('client-login-username').value;
+      const password = document.getElementById('client-login-password').value;
+      if (!username || !password) {
+        showResponse('Please enter both username and password', true);
+        return;
+      }
+      try {
+        const response = await fetch(`${API_BASE_URL}/client/login/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        });
+        const data = await response.json();
+        if (response.ok) {
+          clientAccessToken = data.access;
+          showResponse('Client login successful! Access token stored.');
+          clientLoginSection.classList.add('hidden');
+          clientActions.classList.remove('hidden');
+        } else {
+          showResponse(data.detail || 'Login failed', true);
+        }
+      } catch (error) {
+        showResponse('Network error: ' + error.message, true);
+      }
+    });
+
+    // List files
+    listFilesBtn.addEventListener('click', async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/client/files/`, {
+          method: 'GET',
+          headers: { Authorization: `Bearer ${clientAccessToken}` },
+        });
+        const data = await response.json();
+        if (response.ok) {
+          showResponse('Files retrieved successfully!');
+          displayFileList(data);
+        } else {
+          showResponse(data.detail || 'Failed to retrieve files', true);
+        }
+      } catch (error) {
+        showResponse('Network error: ' + error.message, true);
+      }
+    });
+
+    // Display file list
+    function displayFileList(files) {
+      const fileListContainer = document.getElementById('client-file-list');
+      fileListContainer.innerHTML = '';
+      if (files.length === 0) {
+        fileListContainer.innerHTML = '<p>No files available</p>';
+        return;
+      }
+      files.forEach((file) => {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-item';
+        fileItem.innerHTML = `
+          <div class="file-info">
+            <div class="file-name">${file.file_name}</div>
+            <div class="file-meta">
+              Uploaded by: ${file.uploaded_by} | Date: ${new Date(file.uploaded_at).toLocaleString()}
+            </div>
+          </div>
+          <button class="get-download-link" data-file-id="${file.id}">Get Download Link</button>
+        `;
+        fileListContainer.appendChild(fileItem);
+      });
+      document.querySelectorAll('.get-download-link').forEach((button) => {
+        button.addEventListener('click', function () {
+          const fileId = this.getAttribute('data-file-id');
+          getDownloadLink(fileId);
+        });
+      });
+    }
+
+    // Get download link
+    async function getDownloadLink(fileId) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/generate-token/${fileId}/`, {
+                method: 'GET',
+                headers: { 
+                    'Authorization': `Bearer ${clientAccessToken}` 
+                }
+            });
+            
+            // Handle non-JSON responses
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                throw new Error(`Server returned HTML: ${text.slice(0, 100)}...`);
+            }
+    
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.detail || `Request failed with status ${response.status}`);
+            }
+            
+            showResponse('Secure download link generated!');
+            document.getElementById('download-link').innerHTML = 
+                `<a href="${data.download_url}" download>Download File</a>`;
+            document.getElementById('download-token-display').classList.remove('hidden');
+            document.getElementById('download-link-container').classList.remove('hidden');
+            
+        } catch (error) {
+            showResponse(`Error: ${error.message}`, true);
+        }
+    }
+    
+  </script>
+</body>
+</html>
