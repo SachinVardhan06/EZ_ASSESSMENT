@@ -8,9 +8,9 @@ from .views import (
     ClientSignupView,
     EmailVerifyView,
     FileDownloadTokenView,
+    SecureFileDownloadView,
 )
 from . import views
-from .views import SecureFileDownloadView
 
 urlpatterns = [
     path('ops/login/', OpsLoginView.as_view(), name='ops-login'),
@@ -20,10 +20,9 @@ urlpatterns = [
     path('ops/upload/', FileUploadView.as_view(), name='file-upload'),
     path('client/files/', FileListView.as_view(), name='file-list'),
     path('frontend/', views.frontend, name='frontend'),
-    path('download-file/<uuid:file_id>/', views.FileDownloadView.as_view(), name='file-download'),
-    path('download-file/<uuid:token>/', 
-         SecureFileDownloadView.as_view(), 
-         name='secure-file-download'),
-    path('generate-token/<uuid:file_id>/', FileDownloadTokenView.as_view(), name='generate-token'),
 
+    # Distinct endpoints for file info and secure download
+    path('download-file/file/<uuid:file_id>/', FileDownloadView.as_view(), name='file-download'),
+    path('download-file/token/<uuid:token>/', SecureFileDownloadView.as_view(), name='secure-file-download'),
+    path('generate-token/<uuid:file_id>/', FileDownloadTokenView.as_view(), name='generate-token'),
 ]

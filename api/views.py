@@ -80,7 +80,6 @@ class ClientSignupView(generics.CreateAPIView):
 class EmailVerifyView(generics.GenericAPIView):
     def get(self, request):
         token = request.GET.get('token')
-        # Implement token verification logic
         return Response({"message": "Email verified"})
 
 
@@ -100,7 +99,6 @@ class FileDownloadView(APIView):
     def get(self, request, file_id):
         try:
             file = File.objects.get(id=file_id)
-            # ... generate download token/link logic ...
             return Response({
                 "download_link": f"http://localhost:8000/api/download-file/{file_id}/securetoken...",
                 "message": "success"
@@ -115,8 +113,8 @@ from .models import File, DownloadToken
 from django.utils import timezone
 
 class SecureFileDownloadView(APIView):
-    authentication_classes = []  # No JWT required for this endpoint
-    permission_classes = []      # Security is via the token
+    authentication_classes = [] 
+    permission_classes = []  
 
     def get(self, request, file_id, token):
         try:
@@ -126,9 +124,7 @@ class SecureFileDownloadView(APIView):
                 expires_at__gt=timezone.now(),
                 used=False
             )
-            # Optionally: check download_token.user matches intended user
 
-            # Mark token as used
             download_token.used = True
             download_token.save()
 
@@ -146,7 +142,7 @@ from datetime import timedelta
 from .models import File, DownloadToken
 
 class FileDownloadTokenView(APIView):
-    permission_classes = [IsVerifiedClientUser]  # Only verified clients
+    permission_classes = [IsVerifiedClientUser]
 
     def get(self, request, file_id):
         try:
@@ -184,73 +180,51 @@ from datetime import timedelta
 from django.urls import reverse
 from .models import File, DownloadToken
 from .permissions import IsVerifiedClientUser  # Ensure this is defined
-
 class FileDownloadTokenView(APIView):
-    """
-    Generates a secure download token and URL for client users.
-    Requires authenticated and verified client user.
-    """
     permission_classes = [IsVerifiedClientUser]
 
     def get(self, request, file_id):
         try:
-            # 1. Get the requested file
             file = File.objects.get(id=file_id)
-            
-            # 2. Create a download token (valid for 5 minutes)
             token = DownloadToken.objects.create(
                 file=file,
                 user=request.user,
                 expires_at=timezone.now() + timedelta(minutes=5)
             )
-            
-            # 3. Generate secure download URL
             download_url = request.build_absolute_uri(
-                reverse('secure-file-download', args=[str(token.token)])
+                reverse('secure-file-download', args=[str(token.token)])  # Token only
             )
-            
-            # 4. Return the URL to client
             return Response({
                 "download_url": download_url,
-                "message": "success",
-                "expires_at": token.expires_at.isoformat()
+                "message": "success"
             })
-            
         except File.DoesNotExist:
-            return Response(
-                {"detail": "File not found"},
-                status=status.HTTP_404_NOT_FOUND
-            )
-        except Exception as e:
-            return Response(
-                {"detail": f"Server error: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            return Response({"detail": "File not found"}, status=404)
 
+
+from django.http import FileResponse
+import os
 class SecureFileDownloadView(APIView):
-    authentication_classes = []  # No JWT needed
-    permission_classes = []  # Security via token
+    authentication_classes = []
+    permission_classes = []
 
-    def get(self, request, token):
+    def get(self, request, token):  # Only 'token' parameter
         try:
             download_token = DownloadToken.objects.get(
                 token=token,
                 expires_at__gt=timezone.now(),
                 used=False
             )
-            # Validate client user
-            if download_token.user.role != 'CLIENT':
-                return Response({"detail": "Access denied"}, status=status.HTTP_403_FORBIDDEN)
+            file_obj = download_token.file.file
+            if not os.path.exists(file_obj.path):
+                return Response({"detail": "File not found on disk"}, status=404)
                 
-            # Mark token as used
             download_token.used = True
             download_token.save()
-            
-            # Serve the file
-            file_obj = download_token.file.file
-            return FileResponse(file_obj.open('rb'), 
-                               as_attachment=True, 
-                               filename=file_obj.name)
-            
+            return FileResponse(
+                file_obj.open('rb'), 
+                as_attachment=True, 
+                filename=os.path.basename(file_obj.name)
+            )
         except DownloadToken.DoesNotExist:
-            return Response({"detail": "Invalid or expired token"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"detail": "Invalid or expired token"}, status=404)
