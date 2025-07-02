@@ -40,3 +40,4 @@ class FileAdmin(admin.ModelAdmin):
 # If you have other models, register them similarly
 # from .models import DownloadToken
 # admin.site.register(DownloadToken)
+# Developed by SACHIN VARDHAN
