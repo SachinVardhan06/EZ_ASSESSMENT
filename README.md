@@ -46,7 +46,7 @@ Admin panel: [https://ez-assessment.onrender.com/admin/](https://ez-assessment.o
    python manage.py runserver
    ```
 6. **Access the frontend:**
-   - Visit [http://localhost:8000/api/frontend/](http://localhost:8000/api/frontend/) for the demo UI.
+   - Visit [http://localhost:8000/api/frontend/](https://ez-assessment.onrender.com/api/frontend) for the demo UI.
 
 ## API Endpoints
 
